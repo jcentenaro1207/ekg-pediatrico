@@ -21,7 +21,58 @@
 <body>
   <h1>EKG Pediátrico Interactivo</h1>
 
-  <!-- Secciones interactivas aquí (no modificadas para este fragmento) -->
+  <div class="section">
+    <h2>Edad y Frecuencia Cardíaca</h2>
+    <label>Edad (años): <input type="number" id="edad" onchange="mostrarFrecuencia()"></label>
+    <p id="fcResultado"></p>
+  </div>
+
+  <div class="section">
+    <h2>Calculadora de QT corregido (QTc)</h2>
+    <label>QT (ms): <input type="number" id="qt"></label>
+    <label>RR (segundos): <input type="number" id="rr" step="0.01"></label>
+    <button onclick="calcularQTc()">Calcular QTc</button>
+    <p id="qtcResultado"></p>
+  </div>
+
+  <div class="section">
+    <h2>Comparador de Eje Cardíaco</h2>
+    <label>Edad (años): <input type="number" id="edadEje"></label>
+    <label>Eje QRS (grados): <input type="number" id="ejeQRS"></label>
+    <button onclick="compararEje()">Comparar</button>
+    <p id="ejeResultado"></p>
+    <canvas id="ejeCanvas" width="200" height="200"></canvas>
+  </div>
+
+  <div class="section">
+    <h2>Simulador de EKG por Edad</h2>
+    <button onclick="mostrarEKG()">Mostrar ejemplo</button>
+    <div id="ekgSimulado" class="content ekg-sample"></div>
+  </div>
+
+  <div class="section">
+    <h2>Generador Automático de Informe</h2>
+    <label>Edad: <input type="number" id="informeEdad"></label>
+    <label>FC: <input type="number" id="informeFC"></label>
+    <label>QTc: <input type="number" id="informeQTc"></label>
+    <label>Eje QRS: <input type="number" id="informeEje"></label>
+    <button onclick="generarInforme()">Generar Informe</button>
+    <p id="resultadoInforme"></p>
+  </div>
+
+  <div class="section">
+    <h2>Patologías frecuentes</h2>
+    <button onclick="toggle('patologias')">Mostrar</button>
+    <div id="patologias" class="content">
+      <ul>
+        <li>Síndrome de QT largo</li>
+        <li>Preexcitación (WPW): PR corto, onda delta</li>
+        <li>Bloqueos AV (I, II, III grado)</li>
+        <li>Taquicardia supraventricular</li>
+        <li>Bradicardia sinusal fisiológica (en atletas)</li>
+      </ul>
+    </div>
+  </div>
 
   <script>
     if ('serviceWorker' in navigator) {
@@ -30,6 +81,101 @@
           .then(reg => console.log('Service Worker registrado:', reg.scope))
           .catch(err => console.log('Error al registrar el Service Worker:', err));
       });
+    }
+
+    function toggle(id) {
+      const elem = document.getElementById(id);
+      elem.style.display = elem.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function mostrarFrecuencia() {
+      const edad = parseInt(document.getElementById('edad').value);
+      let resultado = '';
+      if (edad < 1) resultado = 'Frecuencia normal: 110–160 lpm';
+      else if (edad >= 1 && edad <= 5) resultado = 'Frecuencia normal: 95–140 lpm';
+      else if (edad <= 12) resultado = 'Frecuencia normal: 80–120 lpm';
+      else resultado = 'Frecuencia normal: 60–100 lpm';
+      document.getElementById('fcResultado').innerText = resultado;
+    }
+
+    function calcularQTc() {
+      const qt = parseFloat(document.getElementById('qt').value);
+      const rr = parseFloat(document.getElementById('rr').value);
+      if (!qt || !rr || rr === 0) {
+        document.getElementById('qtcResultado').innerText = 'Ingrese valores válidos';
+        return;
+      }
+      const qtc = (qt / Math.sqrt(rr)).toFixed(2);
+      document.getElementById('qtcResultado').innerText = `QTc: ${qtc} ms`;
+    }
+
+    function compararEje() {
+      const edad = parseInt(document.getElementById('edadEje').value);
+      const eje = parseInt(document.getElementById('ejeQRS').value);
+      let rango = '', resultado = '';
+      if (edad < 1) rango = '+60° a +160°';
+      else if (edad >= 1 && edad <= 5) rango = '+30° a +120°';
+      else rango = '0° a +90°';
+
+      if ((edad < 1 && (eje >= 60 && eje <= 160)) ||
+          (edad >= 1 && edad <= 5 && (eje >= 30 && eje <= 120)) ||
+          (edad > 5 && eje >= 0 && eje <= 90)) {
+        resultado = `Eje QRS dentro del rango normal (${rango})`;
+      } else {
+        resultado = `Eje QRS fuera del rango normal (${rango})`;
+      }
+      document.getElementById('ejeResultado').innerText = resultado;
+      dibujarEje(eje);
+    }
+
+    function dibujarEje(angulo) {
+      const canvas = document.getElementById('ejeCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radio = 80;
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radio, 0, 2 * Math.PI);
+      ctx.stroke();
+
+      const radian = (angulo - 90) * Math.PI / 180;
+      const endX = centerX + radio * Math.cos(radian);
+      const endY = centerY + radio * Math.sin(radian);
+
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(endX, endY);
+      ctx.strokeStyle = '#007acc';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    function mostrarEKG() {
+      const edad = parseInt(document.getElementById('edad').value);
+      let ekg = '';
+      if (edad < 1) ekg = 'EKG Neonatal: Ritmo sinusal, eje derecho, onda T invertida en precordiales derechas.';
+      else if (edad <= 5) ekg = 'EKG Infantil: Ritmo sinusal, eje ligeramente derecho, onda T puede estar invertida en V1-V3.';
+      else if (edad <= 12) ekg = 'EKG Escolar: Ritmo sinusal, eje normal, ondas T positivas desde V3.';
+      else ekg = 'EKG Adolescente: Ritmo sinusal, morfología adulta, T positiva de V3 a V6.';
+      document.getElementById('ekgSimulado').innerText = ekg;
+      document.getElementById('ekgSimulado').style.display = 'block';
+    }
+
+    function generarInforme() {
+      const edad = parseInt(document.getElementById('informeEdad').value);
+      const fc = parseInt(document.getElementById('informeFC').value);
+      const qtc = parseFloat(document.getElementById('informeQTc').value);
+      const eje = parseInt(document.getElementById('informeEje').value);
+      let informe = `Informe EKG:\nEdad: ${edad} años. FC: ${fc} lpm. QTc: ${qtc} ms. Eje QRS: ${eje}°.\n`;
+      informe += (qtc > 460) ? 'Hallazgo: QTc prolongado. ' : 'QTc dentro de límites normales. ';
+      informe += (edad < 1 && (eje < 60 || eje > 160)) ||
+                 (edad >= 1 && edad <= 5 && (eje < 30 || eje > 120)) ||
+                 (edad > 5 && (eje < 0 || eje > 90))
+                 ? 'Eje fuera de lo esperado. ' : 'Eje dentro del rango normal. ';
+      document.getElementById('resultadoInforme').innerText = informe;
     }
   </script>
 </body>
