@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EKG Pediátrico Interactivo</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#007acc">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f0f4f8; }
+    h1 { text-align: center; color: #003366; }
+    .section { margin-bottom: 20px; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    button { background-color: #007acc; color: white; padding: 10px; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+    button:hover { background-color: #005f99; }
+    .content { display: none; margin-top: 10px; }
+    input[type=number], input[type=text] { width: 100px; padding: 5px; margin: 5px; }
+    canvas { border: 1px solid #ccc; margin-top: 10px; }
+    .ekg-sample { font-family: monospace; background: #eee; padding: 10px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>EKG Pediátrico Interactivo</h1>
+
+  <!-- Secciones interactivas aquí (no modificadas para este fragmento) -->
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(reg => console.log('Service Worker registrado:', reg.scope))
+          .catch(err => console.log('Error al registrar el Service Worker:', err));
+      });
+    }
+  </script>
+</body>
+</html>
